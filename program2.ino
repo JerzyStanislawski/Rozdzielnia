@@ -234,6 +234,9 @@ void loop()
         int outputValue = currentOutputState[i] == HIGH ? LOW : HIGH;
         Light(outputPin, outputValue);
         currentInputState[i] = state;
+		
+        if (holidayMode)
+          holidayMode = false;
       }
     }
     delay(5);
