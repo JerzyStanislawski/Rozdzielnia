@@ -16,8 +16,9 @@ class Light
     bool state;
     bool switchState;
     bool altSwitchState;
+	byte id;
     
-    Light(byte output, byte mainSwitch, String roomName, byte altSwitch);
+    Light(byte output, byte mainSwitch, String roomName, byte altSwitch, byte id);
     Light() {}
     
     void SwitchLight(byte value);
@@ -28,13 +29,14 @@ class Light
 class Lights
 {
   public:
-    void Initialize();
     void AddLight(byte outputNumber, byte switchNumber, String room, byte altSwitchNumber);
-    void CheckAndSwitchLights();
+    bool CheckAndSwitchLights();
     void SwitchLight(String room, byte value);
     void AllLightsOff();
     void DoForEach(LightAction action);
     void WriteStatus(Client * client);
+	String GetNameById(byte id);
+	byte GetId(String name);
     
     Lights()
     {

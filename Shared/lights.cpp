@@ -2,7 +2,7 @@
 #include "lights.h"
 #include <string.h>
 
-Light::Light(byte output, byte mainSwitch, String roomName, byte altSwitch)
+Light::Light(byte output, byte mainSwitch, String roomName, byte altSwitch, byte id)
 {
   outputNumber = output;
   switchNumber = mainSwitch;
@@ -11,6 +11,7 @@ Light::Light(byte output, byte mainSwitch, String roomName, byte altSwitch)
   state = false;
   switchState = CheckSwitchState();
   altSwitchState = CheckAltSwitchState();
+  this->id = id;
 }
 
 Lights::Lights(const Lights & old)
@@ -18,7 +19,7 @@ Lights::Lights(const Lights & old)
   initializedLights = old.initializedLights;
   for (byte i = 0; i < initializedLights; i++)
   {
-    lights[i] = Light(old.lights[i].outputNumber, old.lights[i].switchNumber, old.lights[i].room, old.lights[i].altSwitchNumber);
+    lights[i] = Light(old.lights[i].outputNumber, old.lights[i].switchNumber, old.lights[i].room, old.lights[i].altSwitchNumber, old.lights[i].id);
   }
 }
 
@@ -42,7 +43,7 @@ bool Light::CheckAltSwitchState()
 
 void Lights::AddLight(byte outputNumber, byte switchNumber, String room, byte altSwitchNumber)
 {
-  lights[initializedLights] = Light(outputNumber, switchNumber, room, altSwitchNumber);
+  lights[initializedLights] = Light(outputNumber, switchNumber, room, altSwitchNumber, initializedLights);
   initializedLights++;
 }
 
@@ -58,7 +59,7 @@ void Lights::AllLightsOff()
   }
 }
 
-void Lights::CheckAndSwitchLights()
+bool Lights::CheckAndSwitchLights()
 {
   for (byte i = 0; i < initializedLights; i++)
   {    
@@ -68,6 +69,8 @@ void Lights::CheckAndSwitchLights()
       lights[i].switchState = switchState;
       lights[i].state = !lights[i].state;
       lights[i].SwitchLight(lights[i].state);
+	  
+	  return true;
     }
     else if (lights[i].altSwitchNumber != 0)
     {
@@ -77,9 +80,12 @@ void Lights::CheckAndSwitchLights()
         lights[i].altSwitchState = altSwitchState;
         lights[i].state = !lights[i].state;
         lights[i].SwitchLight(lights[i].state);   
+		
+		return true;
       }
-    }
+    }	
   }
+  return false;
 }
 
 void Lights::SwitchLight(String room, byte value)
@@ -113,5 +119,21 @@ void Lights::WriteStatus(Client * client)
   }
 }
 
+byte Lights::GetId(String name)
+{
+  for (byte i = 0; i < initializedLights; i++)
+  {
+	  if (lights[i].room == name)
+		  return lights[i].id;
+  }	
+}
 
+String Lights::GetNameById(byte id)
+{
+  for (byte i = 0; i < initializedLights; i++)
+  {
+	  if (lights[i].id == id)
+		  return lights[i].room;
+  }		
+}
 

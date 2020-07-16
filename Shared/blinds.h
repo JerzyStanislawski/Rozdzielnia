@@ -17,7 +17,9 @@ class Blind
     byte outputNumber;
     String room;  
     BlindDirection direction;
-    Blind(byte output, String roomName, BlindDirection blindDirection);
+	byte id;
+	
+    Blind(byte output, String roomName, BlindDirection blindDirection, byte id);
     Blind() {}
 };
 
@@ -29,6 +31,9 @@ class Blinds
     void AllBlindsUp();      
     void AllBlindsDown();
     void DoForEach(BlindAction action);
+	String GetNameById(byte id);
+	byte GetId(String name);
+	
     Blinds()
     {
       initializedBlinds = 0;

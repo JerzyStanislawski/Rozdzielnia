@@ -11,10 +11,11 @@ WebClient::WebClient(byte* mac, IPAddress ip) : server(80)
     server.begin();           
 }
 
-String WebClient::getRequest(String & parameters, RespondAction customRespond)
+String WebClient::getRequest(String parameters[10], int & parameterCount, RespondAction customRespond)
 {
     EthernetClient client = server.available();
     String endpoint = "";
+	parameterCount = 0;
     
     if (client)     
     { 
@@ -31,14 +32,20 @@ String WebClient::getRequest(String & parameters, RespondAction customRespond)
                 }
                 if (c == '\n' && currentLineIsBlank) 
                 {
-                    char buf[128];
-                    endpoint = (String)GetRequestedEndpoint(buf);
+                    endpoint = GetRequestedEndpoint();
                     
                     char c2 = ' ';
+					parameters[0] = String("");
                     while (client.connected() && client.available() && c2 != '\n') 
                     {
                       c2 = client.read();
-                      parameters += c2;
+					  if (c2 == ';')
+					  {
+						  parameterCount++;
+						  parameters[parameterCount] = String("");
+						  continue;
+					  }
+                      parameters[parameterCount] += c2;
                     }
                     
                     RespondHttp(client, true);
@@ -70,18 +77,17 @@ void WebClient::RespondHttp(EthernetClient client, bool contentType)
   client.println();  
 }
 
-char* WebClient::GetRequestedEndpoint(char * buf)
+String WebClient::GetRequestedEndpoint()
 {
     String request(HTTP_req);
+	Serial.println(request);
     int postIndex = request.indexOf("POST /");
     
     String requestStart(postIndex < 0 ? "GET /" : "POST /");
     int requestedStartLength = requestStart.length();
     int endOfResource = request.indexOf(" ", requestedStartLength);
       
-    String requestedEndpoint = request.substring(requestedStartLength, endOfResource);
-    requestedEndpoint.toCharArray(buf, requestedEndpoint.length() + 1);
-    return buf;
+    return request.substring(requestedStartLength, endOfResource);
 }
 
 void  WebClient::ClearHttpReq()

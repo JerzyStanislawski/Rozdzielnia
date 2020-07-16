@@ -2,11 +2,12 @@
 #include "blinds.h"
 #include <string.h>
 
-Blind::Blind(byte output, String roomName, BlindDirection blindDirection)
+Blind::Blind(byte output, String roomName, BlindDirection blindDirection, byte id)
 {
   outputNumber = output;
   room = roomName;
   direction = blindDirection;
+  this->id = id;
 }
 
 void Blinds::MoveBlind(byte outputNumber)
@@ -19,7 +20,7 @@ void Blinds::MoveBlind(byte outputNumber)
 
 void Blinds::AddBlind(byte outputNumber, String room, BlindDirection direction)
 {
-  blinds[initializedBlinds] = Blind(outputNumber, room, direction);
+  blinds[initializedBlinds] = Blind(outputNumber, room, direction, initializedBlinds);
   initializedBlinds++;
 }
 
@@ -65,4 +66,21 @@ void Blinds::DoForEach(BlindAction action)
   } 
 }
 
+byte Blinds::GetId(String name)
+{
+  for (byte i = 0; i < initializedBlinds; i++)
+  {
+	  if (blinds[i].room == name)
+		  return blinds[i].id;
+  }	
+}
+
+String Blinds::GetNameById(byte id)
+{
+  for (byte i = 0; i < initializedBlinds; i++)
+  {
+	  if (blinds[i].id == id)
+		  return blinds[i].room;
+  }		
+}
 

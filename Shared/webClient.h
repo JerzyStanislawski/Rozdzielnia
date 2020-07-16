@@ -11,7 +11,7 @@ typedef void (*RespondAction) (String endpoint, Client * client);
 class WebClient
 {
   public:
-    String getRequest(String & parameters, RespondAction respond);
+    String getRequest(String parameters[10], int & parameterCount, RespondAction respond);
     void Initialize(byte* mac, IPAddress ip);
     
     WebClient(byte* mac, IPAddress ip);
@@ -23,7 +23,7 @@ class WebClient
     
     void RespondHttp(EthernetClient client, bool contentType);
     void ClearHttpReq();
-    char* GetRequestedEndpoint(char * buf);
+    String GetRequestedEndpoint();
 };
 
 #endif

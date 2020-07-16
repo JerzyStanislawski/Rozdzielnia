@@ -1,27 +1,28 @@
-#include <string.h>
-
 #include <Event.h>
 #include <Timer.h>
+#include <string.h>
+#include <EEPROM.h>
 
 #include <Time.h>
 #include <TimeLib.h>
-
 #include <DS3232RTC.h>
 
+#include "scheduler.h"
 #include "webClient.h"
 #include "lights.h"
 #include "blinds.h"
+#include "board.h"
 
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
 IPAddress ip(192, 168, 1, 25); 
 WebClient * webClient;
 
 Timer timer;
-bool wejscieOn;
-bool blindsDownEarlyMorningMode;
 
 Lights lights;
 Blinds blinds;
+Scheduler scheduler(&lights, &blinds);
+Board board(&lights, &blinds, &scheduler);
 
 void setup()
 {    
@@ -33,13 +34,11 @@ void setup()
 
   webClient = new WebClient(mac, ip);
   
-  wejscieOn = false;
-  blindsDownEarlyMorningMode = true;
+  scheduler.RestoreScheduledEvents();
 
-  //setTime(19, 51, 0, 14, 6, 2020);
-  //Serial.println(RTC.set(now()));
-  //Serial.println("time set");
-  timer.every(60 * 1000UL, HandleAutoEvents);
+  webClient = new WebClient(mac, ip);
+   
+  timer.every(60000, HandleAutoEvents);
 }
 
 void InitLights()
@@ -51,7 +50,7 @@ void InitLights()
   lights.AddLight(30, 6, "salon_led", 0);
   lights.AddLight(31, 7, "jadalnia", 0);
   lights.AddLight(32, 8, "kuchnia", 0);
-  lights.AddLight(33, 9, "barek", 0);
+  lights.AddLight(33, 9, "barek", 0); 
   lights.AddLight(34, 10, "spizarnia", 0);
   lights.AddLight(35, 11, "gabinet", 0);
   lights.AddLight(36, 12, "lazienka", 0);
@@ -88,10 +87,10 @@ void InitPins()
 
 void loop()
 {
-  ProcessHttpRequest(*webClient);
+  board.ProcessHttpRequest(*webClient);
   lights.CheckAndSwitchLights();
 
-   timer.update();
+  timer.update();
 }
 
 void InitPinsForLights(byte output, String room, byte mainSwitch, byte altSwitch)
@@ -110,102 +109,13 @@ void InitPinsForBlinds(byte output, String room)
   pinMode(output, OUTPUT);
 }
 
-void HttpCustomRespond(String endpoint, Client * client)
-{
-  if (endpoint == String("getStatus"))
-  {
-     lights.WriteStatus(client);
-  }
-  else if (endpoint == String("getTime"))
-  {
-    tmElements_t tm;
-    RTC.read(tm);            
-  
-    client->print(tm.Hour, DEC);
-    client->print(':');
-    client->print(tm.Minute, DEC);
-    client->print(':');
-    client->println(tm.Second, DEC);
-    client->print("Week day:");
-    client->println(tm.Wday, DEC);
-  }  
-  else if (endpoint == String("enableBlindsDownEarlyMorningMode"))
-    blindsDownEarlyMorningMode = true;
-  else if (endpoint == String("disableBlindsDownEarlyMorningMode"))
-    blindsDownEarlyMorningMode = false;
-  else if (endpoint == String("getBlindsDownEarlyMorningMode"))
-    client->println(blindsDownEarlyMorningMode);
-}
-
-void ProcessHttpRequest(WebClient webClient)
-{
-  String parameters;
-  String endpoint = webClient.getRequest(parameters, HttpCustomRespond);
-
-  if (String(endpoint) == String("impulsOswietlenie") || String(endpoint) == String("impulsRolety"))
-  {
-    bool value;
-    String parameter = ParseHttpParameters(parameters, &value);
-    
-    if (String(endpoint) == String("impulsOswietlenie"))
-    {
-      lights.SwitchLight(parameter, value ? HIGH : LOW);
-    }
-    else if (String(endpoint) == String("impulsRolety"))
-    {
-      if (parameter == String("allRoletyUp"))
-        blinds.AllBlindsUp();
-      else if (parameter == String("allRoletyDown"))
-        blinds.AllBlindsDown();
-      else
-        blinds.MoveBlind(parameters);
-    }
-  }
-}
-
-String ParseHttpParameters(String parameters, bool * outValue)
-{
-    int equalsIndex = parameters.indexOf('=');
-    String parameter = parameters.substring(0, equalsIndex);
-    String boolString = parameters.substring(equalsIndex + 1);
-
-    *outValue = (boolString == "true");
-    return parameter;
-}
-
 void HandleAutoEvents()
 {
   tmElements_t tm;
   RTC.read(tm);
-  
-  if (blindsDownEarlyMorningMode && tm.Hour == 4 && tm.Minute == 0)
-    blinds.AllBlindsDown();
+  int hour = tm.Hour;
+  int minute = tm.Minute;
+  int weekday = tm.Wday;
+
+  scheduler.Execute(hour, minute);
 }
-//  
-//  if (wejscieOn == false)
-//  {
-//    if (tm.Hour == 16)
-//    {
-//      wejscieOn = true;
-//      digitalWrite(OSW_WEJSCIE_GLOWNE, HIGH);
-//    }    
-//  }
-//  else
-//  {    
-//    if (tm.Hour == 23)
-//    {
-//      wejscieOn = false;
-//      digitalWrite(OSW_WEJSCIE_GLOWNE, LOW);
-//    }
-//  }
-//
-//  if (tm.Hour == 4 && tm.Minute == 30)
-//  {
-//    Roleta(ROL_POKOJ1_1_DOWN);
-//    Roleta(ROL_POKOJ1_2_DOWN);
-//  }
-//  
-//}
-
-
-
