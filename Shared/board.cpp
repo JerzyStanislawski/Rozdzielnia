@@ -93,13 +93,18 @@ void Board::HttpCustomRespond(String endpoint, Client * client)
     tmElements_t tm;
     RTC.read(tm);            
   
+    client->print("Time: ");
     client->print(tm.Hour, DEC);
     client->print(':');
     client->print(tm.Minute, DEC);
     client->print(':');
     client->println(tm.Second, DEC);
-    client->print("Week day:");
-    client->println(tm.Wday, DEC);
+    client->print("Date: ");
+    client->println(tm.Year, DEC);
+    client->print('-');
+    client->println(tm.Month, DEC);
+    client->print('-');
+    client->println(tm.Day, DEC);
   }
   else if (endpoint == String("getTwilightMode"))
     client->println(Board::twilightMode);
