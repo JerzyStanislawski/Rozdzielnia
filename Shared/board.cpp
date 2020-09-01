@@ -100,9 +100,9 @@ void Board::HttpCustomRespond(String endpoint, Client * client)
     client->print(':');
     client->println(tm.Second, DEC);
     client->print("Date: ");
-    client->println(tm.Year, DEC);
+    client->print(tm.Year + 1970, DEC);
     client->print('-');
-    client->println(tm.Month, DEC);
+    client->print(tm.Month, DEC);
     client->print('-');
     client->println(tm.Day, DEC);
   }
