@@ -12,6 +12,10 @@ Lights * Board::lights;
 Blinds * Board::blinds;
 Scheduler * Board::scheduler;
 bool Board::twilightMode;
+bool Board::morningMode;
+bool Board::holidayMode;
+byte Board::morningHour;
+byte Board::morningMinute;
 
 void Board::ProcessHttpRequest(WebClient webClient)
 {
@@ -44,6 +48,10 @@ void Board::ProcessHttpRequest(WebClient webClient)
     twilightMode = true;
   else if (endpoint == String("disableTwilightMode"))
     twilightMode = false;
+  else if (endpoint == String("enableHolidayMode"))
+    holidayMode = true;
+  else if (endpoint == String("disableHolidayMode"))
+    holidayMode = false;
   else if (endpoint == String("setTime"))
   {
     String timeValue;
@@ -76,6 +84,18 @@ void Board::ProcessHttpRequest(WebClient webClient)
   {
 	  scheduler->Clear();
   }
+  else if (endpoint == String("setMorningMode"))
+  {
+	if (httpParameters[0] == String("false"))
+		morningMode = false;
+	else
+	{
+		String morningTimeValue;
+		ParseHttpParameter(httpParameters[1], &morningTimeValue);
+		morningHour = morningTimeValue.substring(0, 2).toInt();
+		morningMinutes = morningTimeValue.substring(3, 5).toInt();
+	}
+  }
 }
 
 void Board::HttpCustomRespond(String endpoint, Client * client)
@@ -90,6 +110,40 @@ void Board::HttpCustomRespond(String endpoint, Client * client)
   }
   else if (endpoint == String("getTime"))
   {
+	 Board::PrintTime(client);
+  }
+  else if (endpoint == String("getTwilightMode"))
+  {
+    client->println(Board::twilightMode);
+  }
+  else if (endpoint == String("getHolidayMode"))
+  {
+    client->println(Board::holidayMode);
+  }
+  else if (endpoint == String("getMorningMode"))
+  {
+	Board::PrintMorningMode(client);
+  }
+  else if (endpoint == String("getAllSettings"))
+  {
+	Board::PrintTime(client);
+	client->print('holidayMode: ');
+    client->println(Board::holidayMode);
+	Board::PrintMorningMode(client);
+  }
+}
+
+void Board::PrintMorningMode(Client * client)
+{
+	client->print('morningMode: ');
+    client->println(Board::morningMode);
+	client->print(Board::morningHour, DEC);
+	client->print(':');
+	client->println(Board::morningMinute, DEC);
+}
+
+void Board::PrintTime(Client * client)
+{
     tmElements_t tm;
     RTC.read(tm);            
   
@@ -105,9 +159,6 @@ void Board::HttpCustomRespond(String endpoint, Client * client)
     client->print(tm.Month, DEC);
     client->print('-');
     client->println(tm.Day, DEC);
-  }
-  else if (endpoint == String("getTwilightMode"))
-    client->println(Board::twilightMode);
 }
 
 
@@ -127,4 +178,28 @@ String Board::ParseHttpBoolParameter(String parameters, bool * outValue)
 
     *outValue = (boolString == "true");
     return parameter;
+}
+
+void Board::TimerEvent(tmElements_t tm)
+{		
+	if (Board::twilightMode)
+	{
+	  int twilightTime = twilight[tm.Month - 1][tm.Day - 1];
+	  int twilightHour = (twilightTime / 100) + 2;
+	  int twilightMinute = twilightTime % 100;
+	  
+	  if (tm.Hour == twilightHour && tm.Minute == twilightMinute)
+		 blinds->AllBlindsDown();
+	}
+	
+	if (Board::morningMode)
+	{
+	  if (tm.Hour == Board::morningHour && tm.Minute == morningMinute)
+		 blinds->AllBlindsUp();
+	}
+}
+
+bool Board::GetHolidayMode()
+{
+	return holidayMode;
 }

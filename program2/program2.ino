@@ -24,6 +24,11 @@ Blinds blinds;
 Scheduler scheduler(&lights, &blinds);
 Board board(&lights, &blinds, &scheduler);
 
+bool holidayLighting;
+String currentHolidayRoom;
+byte currentHolidayHour;
+byte currentHolidayMinute;
+
 void setup()
 {    
   Serial.begin(9600);
@@ -37,7 +42,8 @@ void setup()
   webClient = new WebClient(mac, ip);
    
   timer.every(60000, HandleAutoEvents);
-
+  
+  ResetHolidaySettings();
   lights.AllLightsOff();
 }
 
@@ -117,19 +123,62 @@ void HandleAutoEvents()
   RTC.read(tm);
   int hour = tm.Hour;
   int minute = tm.Minute;
-  int weekday = tm.Wday;
 
   scheduler.Execute(hour, minute);
+  board.TimerEvent(tm);
   
-  /*if (!twilightMode)
-    return;
+  if (board.GetHolidayMode())
+  {
+	if (hour == 20 && minute == 0)
+	{
+		holidayLighting = true;
+		ChangeHolidayLight(hour, minute);
+	}
+	if (hour == 23 && minute == 30)
+	{
+		lights.AllLightsOff();
+		ResetHolidaySettings();
+	}
+	if (holidayLighting)
+	{
+		if (hour*60 + minute > currentHolidayHour*60 + currentHolidayMinute + 10 + random(10))
+			ChangeHolidayLight(hour, minute);
+	}
+  }
+}
 
-  int day = tm.Day;
-  int month = tm.Month;
-  int twilightTime = twilight[month - 1][day - 1];
-  int twilightHour = (twilightTime / 100) + 2;
-  int twilightMinute = twilightTime % 100;*/
+void ChangeHolidayLight(int hour, int minute)
+{
+	currentHolidayHour = hour;
+	currentHolidayMinute = minute;
+	
+	if (currentHolidayRoom != String(""))
+		lights.SwitchLight(currentHolidayRoom, LOW);
+	
+	delay(5000 + random(10)*1000);
+	
+	switch (random(4))
+	{
+		case 0:
+			currentHolidayRoom = "pokoj1";
+			break;
+		case 1:
+			currentHolidayRoom = "korytarz";
+			break;
+		case 2:
+			currentHolidayRoom = "garderoba_gora";
+			break;
+		case 3:
+			currentHolidayRoom = "lazienka_gora";
+			break;
+	}
+	lights.SwitchLight(currentHolidayRoom, HIGH);
+}
 
-  //if (hour == twilightHour && minute == twilightMinute)
-    // blinds.AllBlindsDown();
+void ResetHolidaySettings()
+{
+	holidayLighting = false;
+	currentHolidayRoom = "";
+	currentHolidayHour = 0;
+	currentHolidayMinute = 0;
 }

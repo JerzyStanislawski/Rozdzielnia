@@ -14,6 +14,8 @@ class Board
 {
   public:    
 	void ProcessHttpRequest(WebClient webClient);
+	void TimerEvent(tmElements_t tm);
+	bool GetHolidayMode();
   
     Board(Lights * lights, Blinds * blinds, Scheduler * scheduler)
     {
@@ -21,6 +23,9 @@ class Board
 		this->blinds = blinds;
 		this->scheduler = scheduler;
 		twilightMode = false;
+		morningMode = false;
+		morningHour = 7;
+		morningMinute = 0;
     }
 
   private:
@@ -28,12 +33,17 @@ class Board
     static Blinds * blinds;
 	static Scheduler * scheduler;
 	static bool twilightMode;
+	static bool morningMode;
+	static bool holidayMode;
+	static byte morningHour;
+	static byte morningMinute;
 	
 	String httpParameters[10];
 	
 	String ParseHttpBoolParameter(String parameters, bool * outValue);
 	String ParseHttpParameter(String parameters, String * outValue);
 	static void HttpCustomRespond(String endpoint, Client * client);
+	static void PrintTime(Client * client);
 			
 	int twilight[12][31] = {
 	  {1534, 1535, 1536, 1537, 1538, 1540, 1541, 1542, 1543, 1544, 1546, 1547, 1548, 1550, 1551, 1553, 1554, 1555, 1557, 1558, 1600, 1601, 1603, 1605, 1606, 1608, 1609, 1611, 1613, 1614, 1616},
