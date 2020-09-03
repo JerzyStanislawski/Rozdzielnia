@@ -4,6 +4,10 @@
 #include <string.h>
 #include "client.h"
 
+#include <Time.h>
+#include <TimeLib.h>
+#include <DS3232RTC.h>
+
 #include "lights.h"
 #include "blinds.h"
 #include "scheduler.h"
@@ -44,6 +48,7 @@ class Board
 	String ParseHttpParameter(String parameters, String * outValue);
 	static void HttpCustomRespond(String endpoint, Client * client);
 	static void PrintTime(Client * client);
+	static void PrintMorningMode(Client * client);
 			
 	int twilight[12][31] = {
 	  {1534, 1535, 1536, 1537, 1538, 1540, 1541, 1542, 1543, 1544, 1546, 1547, 1548, 1550, 1551, 1553, 1554, 1555, 1557, 1558, 1600, 1601, 1603, 1605, 1606, 1608, 1609, 1611, 1613, 1614, 1616},

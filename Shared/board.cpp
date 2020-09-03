@@ -93,7 +93,7 @@ void Board::ProcessHttpRequest(WebClient webClient)
 		String morningTimeValue;
 		ParseHttpParameter(httpParameters[1], &morningTimeValue);
 		morningHour = morningTimeValue.substring(0, 2).toInt();
-		morningMinutes = morningTimeValue.substring(3, 5).toInt();
+		morningMinute = morningTimeValue.substring(3, 5).toInt();
 	}
   }
 }
@@ -127,7 +127,7 @@ void Board::HttpCustomRespond(String endpoint, Client * client)
   else if (endpoint == String("getAllSettings"))
   {
 	Board::PrintTime(client);
-	client->print('holidayMode: ');
+	client->print("holidayMode: ");
     client->println(Board::holidayMode);
 	Board::PrintMorningMode(client);
   }
@@ -135,7 +135,7 @@ void Board::HttpCustomRespond(String endpoint, Client * client)
 
 void Board::PrintMorningMode(Client * client)
 {
-	client->print('morningMode: ');
+	client->print("morningMode: ");
     client->println(Board::morningMode);
 	client->print(Board::morningHour, DEC);
 	client->print(':');
