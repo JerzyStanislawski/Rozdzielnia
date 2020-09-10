@@ -29,6 +29,8 @@ String currentHolidayRoom;
 byte currentHolidayHour;
 byte currentHolidayMinute;
 
+bool firstLoop;
+
 void setup()
 {    
   Serial.begin(9600);
@@ -40,13 +42,11 @@ void setup()
   webClient = new WebClient(mac, ip);
   
   scheduler.RestoreScheduledEvents();
-
-  webClient = new WebClient(mac, ip);
    
   timer.every(60000, HandleAutoEvents);
   
   ResetHolidaySettings();
-  lights.AllLightsOff();
+  firstLoop = true;
 }
 
 void InitLights()
@@ -98,6 +98,12 @@ void loop()
   board.ProcessHttpRequest(*webClient);
   lights.CheckAndSwitchLights();
 
+  if (firstLoop)
+  {
+    lights.AllLightsOff();
+    firstLoop = false;
+  }
+
   timer.update();
 }
 
@@ -124,26 +130,26 @@ void HandleAutoEvents()
   int hour = tm.Hour;
   int minute = tm.Minute;
 
-  scheduler.Execute(hour, minute);
+  scheduler.Execute(hour, minute, tm.Wday);
   board.TimerEvent(tm);
   
   if (board.GetHolidayMode())
   {
-	if (hour == 19 && minute == 50)
-	{
-		holidayLighting = true;
-		ChangeHolidayLight(hour, minute);
-	}
-	if (hour == 22 && minute == 0)
-	{
-		ResetHolidaySettings();
-		lights.AllLightsOff();
-	}
-	if (holidayLighting)
-	{
-		if (hour*60 + minute > currentHolidayHour*60 + currentHolidayMinute + 10 + random(10))
-			ChangeHolidayLight(hour, minute);
-	}
+  	if (hour == 19 && minute == 50)
+  	{
+  		holidayLighting = true;
+  		ChangeHolidayLight(hour, minute);
+  	}
+  	if (hour == 22 && minute == 0)
+  	{
+  		ResetHolidaySettings();
+  		lights.AllLightsOff();
+  	}
+  	if (holidayLighting)
+  	{
+  		if (hour*60 + minute > currentHolidayHour*60 + currentHolidayMinute + 10 + random(10))
+  			ChangeHolidayLight(hour, minute);
+  	}
   }
 }
 

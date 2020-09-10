@@ -29,6 +29,8 @@ String currentHolidayRoom;
 byte currentHolidayHour;
 byte currentHolidayMinute;
 
+bool firstLoop;
+
 void setup()
 {    
   Serial.begin(9600);
@@ -44,7 +46,7 @@ void setup()
   timer.every(60000, HandleAutoEvents);
   
   ResetHolidaySettings();
-  lights.AllLightsOff();
+  firstLoop = true;
 }
 
 void InitLights()
@@ -97,6 +99,12 @@ void loop()
 {
   board.ProcessHttpRequest(*webClient);
   lights.CheckAndSwitchLights();
+  
+  if (firstLoop)
+  {
+    lights.AllLightsOff();
+    firstLoop = false;
+  }
     
   timer.update();
 }
@@ -124,7 +132,7 @@ void HandleAutoEvents()
   int hour = tm.Hour;
   int minute = tm.Minute;
 
-  scheduler.Execute(hour, minute);
+  scheduler.Execute(hour, minute, tm.Wday);
   board.TimerEvent(tm);
   
   if (board.GetHolidayMode())
