@@ -19,18 +19,19 @@ struct TimeRecord
 	RecordType type;
 	byte hour;
 	byte minute;
+	byte days;
 	bool onOrUp;
 
-  TimeRecord(byte roomId, RecordType type, byte hour, byte minute, bool onOrUp);
+  TimeRecord(byte roomId, RecordType type, byte hour, byte minute, byte days, bool onOrUp);
   TimeRecord() {}
 };
 
 class Scheduler
 {
   public:
-	TimeRecord Add(String room, RecordType type, byte hour, byte minute, bool onOrUp);
+	TimeRecord Add(String room, RecordType type, byte hour, byte minute, byte days, bool onOrUp);
     void Clear();
-	void Execute(byte hour, byte minute);
+	void Execute(byte hour, byte minute, byte currentDay);
 	void WriteEvents(Client * client);
 	void RestoreScheduledEvents();
 	void Schedule(String * records, int count);

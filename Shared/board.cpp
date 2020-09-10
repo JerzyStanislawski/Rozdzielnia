@@ -16,6 +16,7 @@ bool Board::morningMode;
 bool Board::holidayMode;
 byte Board::morningHour;
 byte Board::morningMinute;
+byte Board::morningDays;
 
 void Board::ProcessHttpRequest(WebClient webClient)
 {
@@ -88,12 +89,19 @@ void Board::ProcessHttpRequest(WebClient webClient)
   {
 	if (httpParameters[0] == String("false"))
 		morningMode = false;
-	else
+	else if (httpParameters[0] == String("true"))
 	{
+		String morningDaysValue;
+		ParseHttpParameter(httpParameters[1], &morningDaysValue);
+		morningDays = morningDaysValue.toInt();
+		
 		String morningTimeValue;
-		ParseHttpParameter(httpParameters[1], &morningTimeValue);
+		ParseHttpParameter(httpParameters[2], &morningTimeValue);
+		
 		morningHour = morningTimeValue.substring(0, 2).toInt();
 		morningMinute = morningTimeValue.substring(3, 5).toInt();
+		
+		morningMode = true;
 	}
   }
 }
@@ -129,6 +137,8 @@ void Board::HttpCustomRespond(String endpoint, Client * client)
 	Board::PrintTime(client);
 	client->print("holidayMode: ");
     client->println(Board::holidayMode);
+	client->print("twilightMode: ");
+    client->println(Board::twilightMode);
 	Board::PrintMorningMode(client);
   }
 }
@@ -137,6 +147,9 @@ void Board::PrintMorningMode(Client * client)
 {
 	client->print("morningMode: ");
     client->println(Board::morningMode);
+	client->print("morningDays: ");
+    client->println(Board::morningDays);
+	client->print("morningTime: ");
 	client->print(Board::morningHour, DEC);
 	client->print(':');
 	client->println(Board::morningMinute, DEC);
@@ -194,8 +207,8 @@ void Board::TimerEvent(tmElements_t tm)
 	
 	if (Board::morningMode)
 	{
-	  if (tm.Hour == Board::morningHour && tm.Minute == morningMinute)
-		 blinds->AllBlindsUp();
+	  if (tm.Hour == Board::morningHour && tm.Minute == morningMinute && (morningDays & (1 << tm.Wday)) == (1 << tm.Wday))
+		 blinds->AllBlindsUp();	 
 	}
 }
 

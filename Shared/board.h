@@ -30,6 +30,7 @@ class Board
 		morningMode = false;
 		morningHour = 7;
 		morningMinute = 0;
+		morningDays = 255;
     }
 
   private:
@@ -41,6 +42,7 @@ class Board
 	static bool holidayMode;
 	static byte morningHour;
 	static byte morningMinute;
+	static byte morningDays;
 	
 	String httpParameters[10];
 	

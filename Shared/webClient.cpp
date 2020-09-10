@@ -80,7 +80,6 @@ void WebClient::RespondHttp(EthernetClient client, bool contentType)
 String WebClient::GetRequestedEndpoint()
 {
     String request(HTTP_req);
-	Serial.println(request);
     int postIndex = request.indexOf("POST /");
     
     String requestStart(postIndex < 0 ? "GET /" : "POST /");

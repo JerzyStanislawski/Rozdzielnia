@@ -6,19 +6,20 @@
 #include "blinds.h"
 
 
-TimeRecord::TimeRecord(byte roomId, RecordType type, byte hour, byte minute, bool onOrUp)
+TimeRecord::TimeRecord(byte roomId, RecordType type, byte hour, byte minute, byte days, bool onOrUp)
 {
   this->roomId = roomId;
   this->type = type;
   this->hour = hour;
   this->minute = minute;
   this->onOrUp = onOrUp;
+  this->days = days;
 }
 
-TimeRecord Scheduler::Add(String room, RecordType type, byte hour, byte minute, bool onOrUp)
+TimeRecord Scheduler::Add(String room, RecordType type, byte hour, byte minute, byte days, bool onOrUp)
 {
   byte id = type == RecordType::LIGHTS ? lights->GetId(room) : blinds->GetId(room);
-  records[count] = TimeRecord(id, type, hour, minute, onOrUp);
+  records[count] = TimeRecord(id, type, hour, minute, days, onOrUp);
   count++;
   
   return records[count - 1];
@@ -26,16 +27,18 @@ TimeRecord Scheduler::Add(String room, RecordType type, byte hour, byte minute, 
 
 void Scheduler::Clear()
 {
-    count = 0;
+	count = 0;
+	int eeAddress = 0;
+	EEPROM.put(eeAddress, count);
 }
 
-void Scheduler::Execute(byte hour, byte minute)
+void Scheduler::Execute(byte hour, byte minute, byte currentDay)
 {
 	for (byte i = 0; i < count; i++)
 	{
 		TimeRecord record = records[i];
 		
-		if (record.hour == hour && record.minute == minute)
+		if (record.hour == hour && record.minute == minute && (record.days & (1 << currentDay)) == (1 << currentDay))
 		{
 			if (record.type == RecordType::LIGHTS)
 				lights->SwitchLight(lights->GetNameById(record.roomId), record.onOrUp ? HIGH : LOW);
@@ -47,6 +50,7 @@ void Scheduler::Execute(byte hour, byte minute)
 
 void Scheduler::Schedule(String * records, int partialCount)
 {
+	Serial.println(count + partialCount);
   int eeAddress = 0;
   EEPROM.put(eeAddress, count + partialCount);
   eeAddress += sizeof(int);
@@ -59,13 +63,20 @@ void Scheduler::Schedule(String * records, int partialCount)
       String type = records[i].substring(comma + 1, comma + 2);
       byte hours = (byte)records[i].substring(comma + 3, comma + 5).toInt();
       byte minutes = (byte)records[i].substring(comma + 6, comma + 8).toInt();
-      byte onOrUp = (byte)records[i].substring(comma + 9, comma + 10).toInt();
+      byte days = (byte)records[i].substring(comma + 9, comma + 12).toInt();
+      byte onOrUp = (byte)records[i].substring(comma + 13, comma + 14).toInt();
 
-      TimeRecord record = Add(room, type == "L" ? RecordType::LIGHTS : RecordType::BLINDS, hours, minutes, onOrUp == 1);
+      TimeRecord record = Add(room, type == "L" ? RecordType::LIGHTS : RecordType::BLINDS, hours, minutes, days, onOrUp == 1);
 
       EEPROM.put(eeAddress, record);
       eeAddress += sizeof(TimeRecord);
   }  
+  
+  int temp;
+	eeAddress = 0;
+	EEPROM.get(eeAddress, temp);
+	Serial.println(temp);
+	
 }
 
 void Scheduler::WriteEvents(Client * client)
@@ -79,8 +90,10 @@ void Scheduler::WriteEvents(Client * client)
     client->print(record.type);
     client->print(',');
     client->print(record.hour);
-    client->print(',');
+    client->print(':');
     client->print(record.minute);
+    client->print(',');
+    client->print(record.days);
     client->print(',');
     client->print(record.onOrUp);
     client->println(';');
@@ -91,6 +104,8 @@ void Scheduler::RestoreScheduledEvents()
 {
 	int eeAddress = 0;
 	EEPROM.get(eeAddress, count);
+	
+	Serial.println(count);
 	
 	eeAddress += sizeof(int);
 	for (int i = 0; i < count; i++)
