@@ -7,6 +7,7 @@
 #include <Time.h>
 #include <TimeLib.h>
 #include <DS3232RTC.h>
+#include <EEPROM.h>
 
 Lights * Board::lights;
 Blinds * Board::blinds;
@@ -17,6 +18,8 @@ bool Board::holidayMode;
 byte Board::morningHour;
 byte Board::morningMinute;
 byte Board::morningDays;
+
+int Board::settingsEndAddress;
 
 void Board::ProcessHttpRequest(WebClient webClient)
 {
@@ -44,6 +47,8 @@ void Board::ProcessHttpRequest(WebClient webClient)
       else
         blinds->MoveBlind(httpParameters[0]);
     }
+	
+	return;
   }  
   else if (endpoint == String("enableTwilightMode"))
     twilightMode = true;
@@ -78,12 +83,12 @@ void Board::ProcessHttpRequest(WebClient webClient)
       ParseHttpParameter(httpParameters[i], &record);
       records[i] = record;
     }
-    scheduler->Schedule(records, parameterCount);  
+    scheduler->Schedule(records, parameterCount, Board::settingsEndAddress);  
     delete [] records;  
   }
   else if (endpoint == String("clearSchedule"))
   {
-	  scheduler->Clear();
+	  scheduler->Clear(Board::settingsEndAddress);
   }
   else if (endpoint == String("setMorningMode"))
   {
@@ -104,6 +109,8 @@ void Board::ProcessHttpRequest(WebClient webClient)
 		morningMode = true;
 	}
   }
+  
+  StoreSettings();
 }
 
 void Board::HttpCustomRespond(String endpoint, Client * client)
@@ -197,8 +204,9 @@ void Board::TimerEvent(tmElements_t tm)
 {		
 	if (Board::twilightMode)
 	{
+	  int offset = tm.Month > 10 || tm.Month < 4 ? 1 : 2;
 	  int twilightTime = twilight[tm.Month - 1][tm.Day - 1];
-	  int twilightHour = (twilightTime / 100) + 2;
+	  int twilightHour = (twilightTime / 100) + offset;
 	  int twilightMinute = twilightTime % 100;
 	  
 	  if (tm.Hour == twilightHour && tm.Minute == twilightMinute)
@@ -215,4 +223,55 @@ void Board::TimerEvent(tmElements_t tm)
 bool Board::GetHolidayMode()
 {
 	return holidayMode;
+}
+
+void Board::StoreSettings()
+{
+	int eeAddress = 0;
+	
+	EEPROM.put(eeAddress, Board::twilightMode);		
+	eeAddress += sizeof(bool);
+	
+	EEPROM.put(eeAddress, Board::morningMode);		
+	eeAddress += sizeof(bool);
+	
+	EEPROM.put(eeAddress, Board::holidayMode);		
+	eeAddress += sizeof(bool);
+	
+	EEPROM.put(eeAddress, Board::morningHour);		
+	eeAddress += sizeof(byte);
+	
+	EEPROM.put(eeAddress, Board::morningMinute);		
+	eeAddress += sizeof(byte);
+	
+	EEPROM.put(eeAddress, Board::morningDays);		
+	eeAddress += sizeof(byte);
+	
+}
+
+int Board::RestoreSettings()
+{
+	int eeAddress = 0;
+	
+	EEPROM.get(eeAddress, Board::twilightMode);		
+	eeAddress += sizeof(bool);
+	
+	EEPROM.get(eeAddress, Board::morningMode);		
+	eeAddress += sizeof(bool);
+	
+	EEPROM.get(eeAddress, Board::holidayMode);		
+	eeAddress += sizeof(bool);
+	
+	EEPROM.get(eeAddress, Board::morningHour);		
+	eeAddress += sizeof(byte);
+	
+	EEPROM.get(eeAddress, Board::morningMinute);		
+	eeAddress += sizeof(byte);
+	
+	EEPROM.get(eeAddress, Board::morningDays);		
+	eeAddress += sizeof(byte);
+	
+	Board::settingsEndAddress = eeAddress;
+	
+	return eeAddress;
 }

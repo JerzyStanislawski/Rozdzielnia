@@ -30,17 +30,16 @@ class Scheduler
 {
   public:
 	TimeRecord Add(String room, RecordType type, byte hour, byte minute, byte days, bool onOrUp);
-    void Clear();
+    void Clear(int startAddress);
 	void Execute(byte hour, byte minute, byte currentDay);
 	void WriteEvents(Client * client);
-	void RestoreScheduledEvents();
-	void Schedule(String * records, int count);
+	void RestoreScheduledEvents(int startAddress);
+	void Schedule(String * records, int count, int startAddress);
 	
     Scheduler(Lights * lights, Blinds * blinds)
     {
 	  this->lights = lights;
 	  this->blinds = blinds;
-      Clear();
     }
 	
   private:

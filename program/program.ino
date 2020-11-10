@@ -39,9 +39,10 @@ void setup()
   InitBlinds();
   InitPins();
 
-  webClient = new WebClient(mac, ip);
+  int address = board.RestoreSettings();
+  scheduler.RestoreScheduledEvents(address);
   
-  scheduler.RestoreScheduledEvents();
+  webClient = new WebClient(mac, ip);
    
   timer.every(60000, HandleAutoEvents);
   

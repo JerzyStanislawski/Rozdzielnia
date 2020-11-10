@@ -25,11 +25,10 @@ TimeRecord Scheduler::Add(String room, RecordType type, byte hour, byte minute, 
   return records[count - 1];
 }
 
-void Scheduler::Clear()
+void Scheduler::Clear(int startAddress)
 {
 	count = 0;
-	int eeAddress = 0;
-	EEPROM.put(eeAddress, count);
+	EEPROM.put(startAddress, count);
 }
 
 void Scheduler::Execute(byte hour, byte minute, byte currentDay)
@@ -48,10 +47,9 @@ void Scheduler::Execute(byte hour, byte minute, byte currentDay)
 	}
 }
 
-void Scheduler::Schedule(String * records, int partialCount)
+void Scheduler::Schedule(String * records, int partialCount, int startAddress)
 {
-	Serial.println(count + partialCount);
-  int eeAddress = 0;
+  int eeAddress = startAddress;
   EEPROM.put(eeAddress, count + partialCount);
   eeAddress += sizeof(int);
   eeAddress += count * sizeof(TimeRecord);
@@ -70,13 +68,7 @@ void Scheduler::Schedule(String * records, int partialCount)
 
       EEPROM.put(eeAddress, record);
       eeAddress += sizeof(TimeRecord);
-  }  
-  
-  int temp;
-	eeAddress = 0;
-	EEPROM.get(eeAddress, temp);
-	Serial.println(temp);
-	
+  }  	
 }
 
 void Scheduler::WriteEvents(Client * client)
@@ -100,13 +92,11 @@ void Scheduler::WriteEvents(Client * client)
   }
 }
 
-void Scheduler::RestoreScheduledEvents()
+void Scheduler::RestoreScheduledEvents(int startAddress)
 {
-	int eeAddress = 0;
+	int eeAddress = startAddress;
 	EEPROM.get(eeAddress, count);
-	
-	Serial.println(count);
-	
+		
 	eeAddress += sizeof(int);
 	for (int i = 0; i < count; i++)
 	{
