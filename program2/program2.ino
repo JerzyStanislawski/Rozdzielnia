@@ -60,8 +60,8 @@ void InitLights()
   lights.AddLight(32, 12, "lazienka_led", 0);
   lights.AddLight(35, 15, "pralnia", 0);
   lights.AddLight(37, 17, "garderoba_gora", 0);
-  lights.AddLight(53, 18, "korytarz", 0);
-  lights.AddLight(30, 19, "korytarz_nocne", 0);
+  lights.AddLight(53, 19, "korytarz", 0);
+  lights.AddLight(30, 18, "korytarz_nocne", 0);
   lights.AddLight(29, 9, "schody", 0);
   lights.AddLight(34, 14, "taras", 0);
   lights.AddLight(36, 16, "taras_punktowe", 0);
