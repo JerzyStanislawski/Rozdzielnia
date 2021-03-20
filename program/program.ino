@@ -56,6 +56,7 @@ void InitLights()
   lights.AddLight(25, 23, "kotlownia", 0);
   lights.AddLight(26, 2, "wiatrolap", 3);
   lights.AddLight(28, 22, "hall", 0);
+  lights.AddLight(29, 5, "lazienka2", 0);
   lights.AddLight(30, 6, "salon_led", 0);
   lights.AddLight(31, 7, "jadalnia", 0);
   lights.AddLight(32, 8, "kuchnia", 0);
