@@ -1,4 +1,5 @@
 #include <arduino.h>
+#include <avr/wdt.h>
 #include "blinds.h"
 #include <string.h>
 
@@ -12,6 +13,7 @@ Blind::Blind(byte output, String roomName, BlindDirection blindDirection, byte i
 
 void Blinds::MoveBlind(byte outputNumber)
 {  
+  wdt_reset();  // moving all blinds takes a second per blind
   digitalWrite(outputNumber, HIGH);   
   delay(1000);
   digitalWrite(outputNumber, LOW);  
@@ -73,6 +75,7 @@ byte Blinds::GetId(String name)
 	  if (blinds[i].room == name)
 		  return blinds[i].id;
   }	
+  return 255;
 }
 
 String Blinds::GetNameById(byte id)
@@ -82,5 +85,6 @@ String Blinds::GetNameById(byte id)
 	  if (blinds[i].id == id)
 		  return blinds[i].room;
   }		
+  return String();
 }
 

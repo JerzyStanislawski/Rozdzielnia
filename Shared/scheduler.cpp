@@ -49,6 +49,9 @@ void Scheduler::Execute(byte hour, byte minute, byte currentDay)
 
 void Scheduler::Schedule(String * records, int partialCount, int startAddress)
 {
+  if (partialCount > MAX_SCHEDULED_EVENTS - count)
+    partialCount = MAX_SCHEDULED_EVENTS - count;
+
   int eeAddress = startAddress;
   EEPROM.put(eeAddress, count + partialCount);
   eeAddress += sizeof(int);
@@ -71,7 +74,7 @@ void Scheduler::Schedule(String * records, int partialCount, int startAddress)
   }  	
 }
 
-void Scheduler::WriteEvents(Client * client)
+void Scheduler::WriteEvents(Print * client)
 {  
   for (byte i = 0; i < count; i++)
   {    
@@ -96,6 +99,8 @@ void Scheduler::RestoreScheduledEvents(int startAddress)
 {
 	int eeAddress = startAddress;
 	EEPROM.get(eeAddress, count);
+	if (count < 0 || count > MAX_SCHEDULED_EVENTS)
+		count = 0;  // erased EEPROM or data from an older layout
 		
 	eeAddress += sizeof(int);
 	for (int i = 0; i < count; i++)
