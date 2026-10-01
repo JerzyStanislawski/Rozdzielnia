@@ -2,10 +2,12 @@
 #define SCHEDULER_H
 
 #include <string.h>
-#include "client.h"
+#include <Print.h>
 
 #include "lights.h"
 #include "blinds.h"
+
+#define MAX_SCHEDULED_EVENTS 100
 
 enum RecordType 
 {
@@ -32,7 +34,7 @@ class Scheduler
 	TimeRecord Add(String room, RecordType type, byte hour, byte minute, byte days, bool onOrUp);
     void Clear(int startAddress);
 	void Execute(byte hour, byte minute, byte currentDay);
-	void WriteEvents(Client * client);
+	void WriteEvents(Print * client);
 	void RestoreScheduledEvents(int startAddress);
 	void Schedule(String * records, int count, int startAddress);
 	
@@ -43,7 +45,7 @@ class Scheduler
     }
 	
   private:
-    TimeRecord records[100];
+    TimeRecord records[MAX_SCHEDULED_EVENTS];
     int count;
 	Lights * lights;
 	Blinds * blinds;

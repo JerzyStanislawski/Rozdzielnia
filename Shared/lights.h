@@ -2,7 +2,7 @@
 #define LIGHTS_H
 
 #include <string.h>
-#include "client.h"
+#include <Print.h>
 
 typedef void (*LightAction) (byte outputNumber, String room, byte mainSwitch, byte altSwitch);
 
@@ -34,7 +34,7 @@ class Lights
     void SwitchLight(String room, byte value);
     void AllLightsOff();
     void DoForEach(LightAction action);
-    void WriteStatus(Client * client);
+    void WriteStatus(Print * client);
 	String GetNameById(byte id);
 	byte GetId(String name);
     

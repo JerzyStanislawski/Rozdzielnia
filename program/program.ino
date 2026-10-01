@@ -2,6 +2,8 @@
 #include <Timer.h>
 #include <string.h>
 #include <EEPROM.h>
+#include <Wire.h>
+#include <avr/wdt.h>
 
 #include <Time.h>
 #include <TimeLib.h>
@@ -28,12 +30,17 @@ bool holidayLighting;
 String currentHolidayRoom;
 byte currentHolidayHour;
 byte currentHolidayMinute;
+bool holidayLightPending;
+unsigned long holidayLightOnTime;
 
 bool firstLoop;
 
 void setup()
 {    
   Serial.begin(9600);
+
+  // A disturbed I2C bus must not hang the program while reading the clock.
+  Wire.setWireTimeout(25000, true);
   
   InitLights();
   InitBlinds();
@@ -48,6 +55,9 @@ void setup()
   
   ResetHolidaySettings();
   firstLoop = true;
+
+  // Restarts the board if anything hangs for 8 s, instead of staying dead until power cycle.
+  wdt_enable(WDTO_8S);
 }
 
 void InitLights()
@@ -97,6 +107,8 @@ void InitPins()
 
 void loop()
 {
+  wdt_reset();
+
   board.ProcessHttpRequest(*webClient);
   lights.CheckAndSwitchLights();
 
@@ -107,6 +119,13 @@ void loop()
   }
 
   timer.update();
+
+  if (holidayLightPending && (long)(millis() - holidayLightOnTime) >= 0)
+  {
+    holidayLightPending = false;
+    if (board.GetHolidayMode())
+      lights.SwitchLight(currentHolidayRoom, HIGH);
+  }
 }
 
 void InitPinsForLights(byte output, String room, byte mainSwitch, byte altSwitch)
@@ -128,7 +147,8 @@ void InitPinsForBlinds(byte output, String room)
 void HandleAutoEvents()
 {      
   tmElements_t tm;
-  RTC.read(tm);
+  if (RTC.read(tm) != 0)
+    return;
   int hour = tm.Hour;
   int minute = tm.Minute;
 
@@ -163,8 +183,6 @@ void ChangeHolidayLight(int hour, int minute)
 	if (currentHolidayRoom != String(""))
 		lights.SwitchLight(currentHolidayRoom, LOW);
 	
-	delay(5000 + random(10)*1000);
-	
 	switch (random(4))
 	{
 		case 0:
@@ -180,7 +198,11 @@ void ChangeHolidayLight(int hour, int minute)
 			currentHolidayRoom = "hall";
 			break;
 	}
-	lights.SwitchLight(currentHolidayRoom, HIGH);
+
+	// The light goes on after a pause, in loop(). Waiting here would stop the HTTP server
+	// and the wall switches for up to 14 s.
+	holidayLightOnTime = millis() + 5000 + random(10)*1000;
+	holidayLightPending = true;
 }
 
 void ResetHolidaySettings()
@@ -189,4 +211,5 @@ void ResetHolidaySettings()
 	currentHolidayRoom = "";
 	currentHolidayHour = 0;
 	currentHolidayMinute = 0;
+	holidayLightPending = false;
 }

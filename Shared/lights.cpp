@@ -109,7 +109,7 @@ void Lights::DoForEach(LightAction action)
   } 
 }
 
-void Lights::WriteStatus(Client * client)
+void Lights::WriteStatus(Print * client)
 {  
   for (byte i = 0; i < initializedLights; i++)
   {    
@@ -126,6 +126,7 @@ byte Lights::GetId(String name)
 	  if (lights[i].room == name)
 		  return lights[i].id;
   }	
+  return 255;
 }
 
 String Lights::GetNameById(byte id)
@@ -135,5 +136,6 @@ String Lights::GetNameById(byte id)
 	  if (lights[i].id == id)
 		  return lights[i].room;
   }		
+  return String();
 }
 
